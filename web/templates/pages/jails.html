@@ -1,29 +1,18 @@
-{{ define "pages/jails.html" }}
-<!doctype html>
-<html lang="en">
+{{ define "content" }}
 
-<head>
-    <meta charset="utf-8">
-    <title>{{ .Title }} - Jail Deck</title>
-</head>
+<h1>{{ .Title }}</h1>
 
-<body>
-    <h1>{{ .Title }}</h1>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{ range .Jails }}
-            {{ template "components/jail_row.html" . }}
-            {{end}}
-        </tbody>
-    </table>
-</body>
-
-</html>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range .Jails }}
+        {{ template "components/jail_row.html" . }}
+        {{ end }}
+    </tbody>
+</table>
 {{ end }}

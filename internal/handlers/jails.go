@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/otterlabs/jaildeck/internal/services"
@@ -34,7 +35,8 @@ func (h *JailHandler) List(w http.ResponseWriter, r *http.Request) {
 		Jails: jails,
 	}
 
-	if err := h.renderer.Render(w, "pages/jails.html", data); err != nil {
+	if err := h.renderer.Render(w, "jails", data); err != nil {
+		fmt.Printf("failed to render page: %s", err.Error())
 		http.Error(w, "failed to render page", http.StatusInternalServerError)
 	}
 }
