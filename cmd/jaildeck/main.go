@@ -1,21 +1,17 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/otterlabs/jaildeck/internal/app"
 )
 
 func main() {
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello world"))
-	})
-
-	http.ListenAndServe(":3333", r)
+	a := app.New()
+	log.Printf("Jail Deck listening on http://127.0.0.1:8888")
+	err := http.ListenAndServe(":8888", a.Routes())
+	if err != nil {
+		log.Fatal(err)
+	}
 }

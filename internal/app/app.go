@@ -1,1 +1,40 @@
 package app
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/otterlabs/jaildeck/internal/handlers"
+	"github.com/otterlabs/jaildeck/internal/services"
+	"github.com/otterlabs/jaildeck/internal/system"
+)
+
+type App struct {
+	jailHandler *handlers.JailHandler
+}
+
+func New() *App {
+	jailSystem := system.NewFakeJailSystem()
+	jailService := services.NewJailService(jailSystem)
+	jailHandler := handlers.NewJailHandler(jailService)
+
+	return &App{
+		jailHandler: jailHandler,
+	}
+}
+
+func (a *App) Routes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/jails", http.StatusSeeOther)
+	})
+
+	r.Get("/jails", a.jailHandler.List)
+
+	return r
+}
