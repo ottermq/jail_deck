@@ -1,8 +1,8 @@
 package views
 
 import (
+	"html/template"
 	"net/http"
-	"text/template"
 )
 
 type Renderer struct {

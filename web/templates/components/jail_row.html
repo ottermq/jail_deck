@@ -3,13 +3,23 @@
     <td>{{ .Name }}</td>
     <td>{{ .Status }}</td>
     <td>
-        <button hx-post="/jails/{{.Name}}/start" hx-target="#jail-{{ .Name }}" hx-swap="outerHTML">
-            Start
-        </button>
+        {{ if eq .Status "running" }}
 
         <button hx-post="/jails/{{ .Name }}/stop" hx-target="#jail-{{ .Name }}" hx-swap="outerHTML">
             Stop
         </button>
+
+        <button hx-post="/jails/{{.Name}}/restart" hx-target="#jail-{{ .Name }}" hx-swap="outerHTML">
+            Restart
+        </button>
+
+        {{ else }}
+
+        <button hx-post="/jails/{{.Name}}/start" hx-target="#jail-{{ .Name }}" hx-swap="outerHTML">
+            Start
+        </button>
+
+        {{ end }}
     </td>
 </tr>
 {{ end }}

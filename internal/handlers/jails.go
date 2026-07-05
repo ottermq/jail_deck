@@ -48,6 +48,7 @@ func (h *JailHandler) Start(w http.ResponseWriter, r *http.Request) {
 	jail, err := h.service.Start(r.Context(), name)
 	if err != nil {
 		http.Error(w, "failed to start jail", http.StatusInternalServerError)
+		return
 	}
 
 	if err := h.renderer.RenderComponent(w, "jails", "components/jail_row.html", jail); err != nil {
@@ -61,6 +62,7 @@ func (h *JailHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	jail, err := h.service.Stop(r.Context(), name)
 	if err != nil {
 		http.Error(w, "failed to stop jail", http.StatusInternalServerError)
+		return
 	}
 
 	if err := h.renderer.RenderComponent(w, "jails", "components/jail_row.html", jail); err != nil {
@@ -74,6 +76,7 @@ func (h *JailHandler) Restart(w http.ResponseWriter, r *http.Request) {
 	jail, err := h.service.Restart(r.Context(), name)
 	if err != nil {
 		http.Error(w, "failed to restart jail", http.StatusInternalServerError)
+		return
 	}
 
 	if err := h.renderer.RenderComponent(w, "jails", "components/jail_row.html", jail); err != nil {
