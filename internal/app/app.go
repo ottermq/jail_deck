@@ -8,6 +8,7 @@ import (
 	"github.com/otterlabs/jaildeck/internal/handlers"
 	"github.com/otterlabs/jaildeck/internal/services"
 	"github.com/otterlabs/jaildeck/internal/system"
+	"github.com/otterlabs/jaildeck/internal/views"
 )
 
 type App struct {
@@ -15,9 +16,14 @@ type App struct {
 }
 
 func New() *App {
+	renderer, err := views.NewRenderer()
+	if err != nil {
+		panic(err)
+	}
+
 	jailSystem := system.NewFakeJailSystem()
 	jailService := services.NewJailService(jailSystem)
-	jailHandler := handlers.NewJailHandler(jailService)
+	jailHandler := handlers.NewJailHandler(jailService, renderer)
 
 	return &App{
 		jailHandler: jailHandler,

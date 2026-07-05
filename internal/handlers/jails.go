@@ -1,37 +1,40 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/otterlabs/jaildeck/internal/services"
+	"github.com/otterlabs/jaildeck/internal/views"
 )
 
 type JailHandler struct {
-	jailService *services.JailService
+	service  *services.JailService
+	renderer *views.Renderer
 }
 
-func NewJailHandler(jailService *services.JailService) *JailHandler {
+func NewJailHandler(jailService *services.JailService, renderer *views.Renderer) *JailHandler {
 	return &JailHandler{
-		jailService: jailService,
+		service:  jailService,
+		renderer: renderer,
 	}
 }
 
 func (h *JailHandler) List(w http.ResponseWriter, r *http.Request) {
-	jails, err := h.jailService.List(r.Context())
+	jails, err := h.service.List(r.Context())
 	if err != nil {
 		http.Error(w, "failed to list jails", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	fmt.Fprintln(w, "<h1>Jails</h1>")
-	fmt.Fprintln(w, "<table>")
-	fmt.Fprintln(w, "<tr><th>Name</th></tr>")
-
-	for _, jail := range jails {
-		fmt.Fprintf(w, "<tr><td>%s</td><td>%s</td></tr>", jail.Name, jail.Status)
+	data := struct {
+		Title string
+		Jails any
+	}{
+		Title: "Jails",
+		Jails: jails,
 	}
-	fmt.Fprintln(w, "</table>")
+
+	if err := h.renderer.Render(w, "pages/jails.html", data); err != nil {
+		http.Error(w, "failed to render page", http.StatusInternalServerError)
+	}
 }

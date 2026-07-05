@@ -1,0 +1,34 @@
+{{ define "pages/jails.html" }}
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{ .Title }}Jail Deck</title>
+</head>
+
+<body>
+    <h1>{{ .Title}}</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Jails }}
+            <tr>
+                <td>{{ .Name }}</td>
+                <td>{{ .Status }}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</body>
+
+</html>
+
+{{ end }}
