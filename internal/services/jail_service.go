@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/otterlabs/jaildeck/internal/domain"
 	"github.com/otterlabs/jaildeck/internal/system"
 )
 
@@ -16,18 +17,18 @@ func NewJailService(system system.JailSystem) *JailService {
 	}
 }
 
-func (s *JailService) List(ctx context.Context) ([]system.Jail, error) {
+func (s *JailService) List(ctx context.Context) ([]domain.Jail, error) {
 	return s.system.List(ctx)
 }
 
-func (s *JailService) Start(ctx context.Context, name string) (system.Jail, error) {
+func (s *JailService) Start(ctx context.Context, name string) (domain.Jail, error) {
 	return s.system.Start(ctx, name)
 }
 
-func (s *JailService) Stop(ctx context.Context, name string) (system.Jail, error) {
+func (s *JailService) Stop(ctx context.Context, name string) (domain.Jail, error) {
 	return s.system.Stop(ctx, name)
 }
 
-func (s *JailService) Restart(ctx context.Context, name string) (system.Jail, error) {
+func (s *JailService) Restart(ctx context.Context, name string) (domain.Jail, error) {
 	return s.system.Restart(ctx, name)
 }

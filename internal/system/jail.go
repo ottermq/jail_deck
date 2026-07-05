@@ -1,15 +1,14 @@
 package system
 
-import "context"
+import (
+	"context"
 
-type Jail struct {
-	Name   string
-	Status string
-}
+	"github.com/otterlabs/jaildeck/internal/domain"
+)
 
 type JailSystem interface {
-	List(ctx context.Context) ([]Jail, error)
-	Start(ctx context.Context, name string) (Jail, error)
-	Stop(ctx context.Context, name string) (Jail, error)
-	Restart(ctx context.Context, name string) (Jail, error)
+	List(ctx context.Context) ([]domain.Jail, error)
+	Start(ctx context.Context, name string) (domain.Jail, error)
+	Stop(ctx context.Context, name string) (domain.Jail, error)
+	Restart(ctx context.Context, name string) (domain.Jail, error)
 }
