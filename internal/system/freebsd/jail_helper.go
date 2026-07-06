@@ -29,10 +29,7 @@ func listJailsFromConfDir(dir string) ([]domain.Jail, error) {
 			return nil, err
 		}
 
-		parsed, err := parseJailConf(string(content))
-		if err != nil {
-			continue
-		}
+		parsed := parseJailConf(string(content))
 		jails = append(jails, parsed...)
 	}
 
@@ -44,11 +41,11 @@ func listJailsFromConfFile(filename string) ([]domain.Jail, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseJailConf(string(content))
+	return parseJailConf(string(content)), nil
 }
 
-func parseJailConf(content string) ([]domain.Jail, error) {
-	lines := strings.Split(string(content), "\n")
+func parseJailConf(content string) []domain.Jail {
+	lines := strings.Split(content, "\n")
 
 	var jails []domain.Jail
 	var jail domain.Jail
@@ -96,7 +93,7 @@ func parseJailConf(content string) ([]domain.Jail, error) {
 		}
 	}
 
-	return jails, nil
+	return jails
 
 }
 
