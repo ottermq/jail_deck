@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/otterlabs/jaildeck/internal/domain"
@@ -30,7 +31,15 @@ var jlsListCommand = system.Command{
 	Args: []string{"--libxo=json", "jid", "name", "host.hostname", "ip4.addr", "path"},
 }
 
-func (a *Adapter) List(ctx context.Context) ([]domain.Jail, error) {
+func (a *Adapter) listConfiguredJails() ([]domain.Jail, error) {
+	dirJails, err := listJailsFromConfDir(defaultJailConfDir)
+	if err != nil {
+		return nil, err
+	}
+	return dirJails, nil
+}
+
+func (a *Adapter) runningJails(ctx context.Context) ([]domain.Jail, error) {
 	result, err := a.runner.Run(ctx, jlsListCommand)
 	if err != nil {
 		return nil, fmt.Errorf("list jails: %w", err)
@@ -60,6 +69,44 @@ func parseJLSOutput(stdout string) (jlsOutput, error) {
 		return jlsOutput{}, err
 	}
 	return output, nil
+}
+
+func mergeJails(configured, running []domain.Jail) []domain.Jail {
+	maxLen := len(configured) + len(running)
+	merged := make([]domain.Jail, 0, maxLen)
+	runningNotConfigured := make([]domain.Jail, 0, len(running))
+	merged = append(merged, configured...)
+
+	for _, running := range running {
+		matched := false
+		for idx, configured := range merged {
+			if configured.Name == running.Name {
+				merged[idx] = running
+				matched = true
+			}
+		}
+		if matched {
+			continue
+		}
+		runningNotConfigured = append(runningNotConfigured, running)
+		log.Printf("[WARN] jail %s not found in configuration files", running.Name)
+	}
+	merged = append(merged, runningNotConfigured...)
+	return merged
+}
+
+func (a *Adapter) List(ctx context.Context) ([]domain.Jail, error) {
+	configured, err := a.listConfiguredJails()
+	if err != nil {
+		return nil, err
+	}
+
+	running, err := a.runningJails(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mergeJails(configured, running), nil
 }
 
 func (a *Adapter) Start(ctx context.Context, name string) (domain.Jail, error) {
