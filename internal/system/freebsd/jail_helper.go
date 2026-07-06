@@ -66,6 +66,21 @@ func (a *Adapter) runningJails(ctx context.Context) ([]domain.Jail, error) {
 	return jails, nil
 }
 
+func (a *Adapter) getJailByName(ctx context.Context, name string) (domain.Jail, error) {
+	jails, err := a.List(ctx)
+	if err != nil {
+		return domain.Jail{}, err
+	}
+
+	for _, jail := range jails {
+		if jail.Name == name {
+			return jail, nil
+		}
+	}
+
+	return domain.Jail{}, fmt.Errorf("jail %q not found", name)
+}
+
 func parseJLSOutput(stdout string) (jlsOutput, error) {
 	var output jlsOutput
 	err := json.Unmarshal([]byte(stdout), &output)

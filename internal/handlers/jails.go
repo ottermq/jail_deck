@@ -47,7 +47,7 @@ func (h *JailHandler) Start(w http.ResponseWriter, r *http.Request) {
 
 	jail, err := h.service.Start(r.Context(), name)
 	if err != nil {
-		http.Error(w, "failed to start jail", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("failed to start jail: %v", err), http.StatusInternalServerError)
 		return
 	}
 

@@ -2,7 +2,8 @@ package freebsd
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/otterlabs/jaildeck/internal/domain"
 	"github.com/otterlabs/jaildeck/internal/system"
@@ -41,14 +42,67 @@ func (a *Adapter) List(ctx context.Context) ([]domain.Jail, error) {
 	return mergeJails(configured, running), nil
 }
 
+func (a *Adapter) runService(ctx context.Context, name, action string) (domain.Jail, error) {
+	cmd := system.Command{
+		Name: "service",
+		Args: []string{"jail", action, name},
+	}
+	fmt.Printf("\ncmd: %v\n", cmd)
+	result, err := a.runner.Run(ctx, cmd)
+
+	if err != nil {
+		return domain.Jail{}, fmt.Errorf("%q jail %q: %w", action, name, err)
+	}
+
+	if found := strings.Contains(result.Stdout, "cannot"); found {
+		return domain.Jail{}, fmt.Errorf(
+			"%s jail %q failed: %w; exit=%d stdout=%q stderr=%q",
+			action,
+			name,
+			err,
+			result.ExitCode,
+			result.Stdout,
+			result.Stderr,
+		)
+	}
+	err = parseError(name, result.Stdout)
+	if err != nil {
+		return domain.Jail{}, err
+	}
+
+	return a.getJailByName(ctx, name)
+}
+
+func parseError(jail, output string) error {
+	fmt.Println(output)
+	cutted, _ := strings.CutPrefix(output, "Starting jails:")
+	outputs := strings.Split(cutted, "\n")
+	fmt.Printf("%v", outputs)
+	var errStr string
+	if len(outputs) > 0 && strings.Contains(outputs[0], "cannot") {
+		fmt.Println("found --cannot--")
+		var errs []string
+		for _, o := range outputs {
+			o = strings.TrimSpace(o)
+			o, _ = strings.CutPrefix(o, fmt.Sprintf("jail: %s:", jail))
+			if o != "" {
+				errs = append(errs, o)
+			}
+		}
+		errStr = strings.Join(errs, "/n ")
+		return fmt.Errorf("%s %s", outputs[0], errStr)
+	}
+	return nil
+}
+
 func (a *Adapter) Start(ctx context.Context, name string) (domain.Jail, error) {
-	return domain.Jail{}, errors.New("start jail is not implemented for FreeBSD yet")
+	return a.runService(ctx, name, "start")
 }
 
 func (a *Adapter) Stop(ctx context.Context, name string) (domain.Jail, error) {
-	return domain.Jail{}, errors.New("stop jail is not implemented for FreeBSD yet")
+	return a.runService(ctx, name, "stop")
 }
 
 func (a *Adapter) Restart(ctx context.Context, name string) (domain.Jail, error) {
-	return domain.Jail{}, errors.New("restart jail is not implemented for FreeBSD yet")
+	return a.runService(ctx, name, "restart")
 }
