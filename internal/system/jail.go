@@ -3,7 +3,7 @@ package system
 import (
 	"context"
 
-	"github.com/otterlabs/jaildeck/internal/domain"
+	"github.com/ottermq/jaildeck/internal/domain"
 )
 
 type JailSystem interface {

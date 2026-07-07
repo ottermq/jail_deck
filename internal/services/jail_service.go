@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/otterlabs/jaildeck/internal/domain"
-	"github.com/otterlabs/jaildeck/internal/system"
+	"github.com/ottermq/jaildeck/internal/domain"
+	"github.com/ottermq/jaildeck/internal/system"
 )
 
 type JailService struct {

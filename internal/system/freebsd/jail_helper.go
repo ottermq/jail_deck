@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/otterlabs/jaildeck/internal/domain"
+	"github.com/ottermq/jaildeck/internal/domain"
 )
 
 const (

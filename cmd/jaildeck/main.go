@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/otterlabs/jaildeck/internal/app"
+	"github.com/ottermq/jaildeck/internal/app"
 )
 
 func main() {

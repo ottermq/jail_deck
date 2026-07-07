@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/otterlabs/jaildeck/internal/domain"
+	"github.com/ottermq/jaildeck/internal/domain"
 )
 
 type FakeJailSystem struct {

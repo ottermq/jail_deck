@@ -5,11 +5,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/otterlabs/jaildeck/internal/handlers"
-	"github.com/otterlabs/jaildeck/internal/services"
-	"github.com/otterlabs/jaildeck/internal/system"
-	"github.com/otterlabs/jaildeck/internal/system/freebsd"
-	"github.com/otterlabs/jaildeck/internal/views"
+	"github.com/ottermq/jaildeck/internal/handlers"
+	"github.com/ottermq/jaildeck/internal/services"
+	"github.com/ottermq/jaildeck/internal/system"
+	"github.com/ottermq/jaildeck/internal/system/freebsd"
+	"github.com/ottermq/jaildeck/internal/views"
 )
 
 type App struct {
