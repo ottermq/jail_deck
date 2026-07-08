@@ -53,7 +53,8 @@ func (a *Adapter) runService(ctx context.Context, name, action string) (domain.J
 		err = validateJailActionResult(name, action, result)
 	}
 	if err != nil {
-		return domain.Jail{}, &system.CommandError{
+		jail, _ := a.getJailByName(ctx, name)
+		return jail, &system.CommandError{
 			Command: cmd.Name,
 			Args:    cmd.Args,
 			Result:  result,
@@ -86,9 +87,17 @@ func validateJailActionResult(name, action string, result system.CommandResult) 
 	trimmed, _ := strings.CutPrefix(result.Stdout, prefix)
 	trimmed = strings.ReplaceAll(trimmed, "\n", " ")
 	trimmed = strings.ReplaceAll(trimmed, "  ", " ")
+	trimmed = strings.TrimSpace(trimmed)
 	// expected to find if success: "<jail>."
-	if _, ok := strings.CutSuffix(result.Stdout, fmt.Sprintf("%s.", name)); ok {
-		return nil
+	if retrimmed, ok := strings.CutSuffix(trimmed, fmt.Sprintf("%s.", name)); ok {
+		if len(retrimmed) == 0 {
+			return nil
+		}
+	}
+	if retrimmed, ok := strings.CutSuffix(trimmed, "."); ok {
+		if len(retrimmed) == 0 {
+			return nil
+		}
 	}
 	line_prefix := fmt.Sprintf("jail: %s:", name)
 	switch action {
@@ -96,15 +105,19 @@ func validateJailActionResult(name, action string, result system.CommandResult) 
 		// for the command "start", it is expected "cannot start jail   "<name>":"
 		start_prefix := fmt.Sprintf("cannot start jail \"%s\":", name)
 		if start_trimmed, ok := strings.CutPrefix(trimmed, start_prefix); ok {
+			// means error
 			start_trimmed = strings.TrimSpace(start_trimmed)
 			startErr, _ := strings.CutPrefix(start_trimmed, line_prefix)
-			startErr = strings.ReplaceAll(start_trimmed, line_prefix, "; ")
+			startErr = strings.ReplaceAll(startErr, line_prefix, "; ")
 			return errors.New(strings.TrimSpace(startErr))
 		}
 	case "stop", "restart":
 		// for the command "stop", it is expected the prefix <name>
 		// Restart => stop + start
 		stop_trimmed, _ := strings.CutPrefix(trimmed, name)
+		if len(stop_trimmed) == 1 {
+			return nil
+		}
 		stopErr, _ := strings.CutPrefix(stop_trimmed, line_prefix)
 		return errors.New(strings.TrimSpace(stopErr))
 	default:
