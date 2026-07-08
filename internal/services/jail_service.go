@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -79,25 +80,27 @@ func validJailName(name string) bool {
 	return true
 }
 
-func (s *JailService) logJailOperation(ctx context.Context, name, operation string, err error) {
+func (s *JailService) logJailOperation(ctx context.Context, name, operation string, opErr error) {
 	entry := operations.Entry{
 		Timestamp: time.Now(),
 		Operation: operation,
 		Target:    name,
 		Command:   "",
-		Success:   err == nil,
+		Success:   opErr == nil,
 	}
-	if err != nil {
+	if opErr != nil {
 		var commandErr *system.CommandError
-		if errors.As(err, &commandErr) {
+		if errors.As(opErr, &commandErr) {
 			entry.Command = commandErr.Command + " " + strings.Join(commandErr.Args, " ")
 			entry.ExitCode = commandErr.Result.ExitCode
 			entry.Error = commandErr.Unwrap().Error()
 
 		} else {
-			entry.Error = err.Error()
+			entry.Error = opErr.Error()
 			entry.ExitCode = -1
 		}
 	}
-	_ = s.operationLogger.Log(ctx, entry)
+	if err := s.operationLogger.Log(ctx, entry); err != nil {
+		log.Printf("failed to write operation log: %v", err)
+	}
 }
