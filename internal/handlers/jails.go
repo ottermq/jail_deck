@@ -91,7 +91,7 @@ func (h *JailHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	} else {
 		result = OperationResultView{
 			Success: true,
-			Message: fmt.Sprintf("Started stop %q.", name),
+			Message: fmt.Sprintf("Stopped jail %q.", name),
 		}
 	}
 
