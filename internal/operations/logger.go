@@ -18,3 +18,7 @@ type Entry struct {
 type Logger interface {
 	Log(ctx context.Context, entry Entry) error
 }
+
+type Reader interface {
+	Recent(ctx context.Context, limit int) ([]Entry, error)
+}

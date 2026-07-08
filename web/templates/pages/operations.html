@@ -1,0 +1,27 @@
+{{ define "content" }}
+
+<h1>{{ .Title }}</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Operation</th>
+            <th>Target</th>
+            <th>Success</th>
+            <th>Error</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ range .Entries }}
+        <tr>
+            <td>{{ .Timestamp }}</td>
+            <td>{{ .Operation }}</td>
+            <td>{{ .Target }}</td>
+            <td>{{ .Success }}</td>
+            <td>{{ .Error }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ end }}

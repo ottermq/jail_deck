@@ -14,7 +14,8 @@ import (
 )
 
 type App struct {
-	jailHandler *handlers.JailHandler
+	jailHandler      *handlers.JailHandler
+	operationHandler *handlers.OperationHandler
 }
 
 func New() *App {
@@ -29,8 +30,12 @@ func New() *App {
 	jailService := services.NewJailService(jailSystem, operationLogger)
 	jailHandler := handlers.NewJailHandler(jailService, renderer)
 
+	operationService := services.NewOperationService(operationLogger)
+	operationHandler := handlers.NewOperationHandler(operationService, renderer)
+
 	return &App{
-		jailHandler: jailHandler,
+		jailHandler:      jailHandler,
+		operationHandler: operationHandler,
 	}
 }
 
@@ -53,6 +58,10 @@ func (a *App) Routes() http.Handler {
 			r.Post("/stop", a.jailHandler.Stop)
 			r.Post("/restart", a.jailHandler.Restart)
 		})
+	})
+
+	r.Route("/operations", func(r chi.Router) {
+		r.Get("/", a.operationHandler.List)
 	})
 
 	return r

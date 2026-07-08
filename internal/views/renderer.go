@@ -19,10 +19,18 @@ func NewRenderer() (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
+	operationPage, err := template.ParseFiles(
+		"web/templates/layouts/base.html",
+		"web/templates/pages/operations.html",
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Renderer{
 		pages: map[string]*template.Template{
-			"jails": jailPage,
+			"jails":      jailPage,
+			"operations": operationPage,
 		},
 	}, nil
 }

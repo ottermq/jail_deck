@@ -1,9 +1,12 @@
 package operations
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
+	"slices"
 	"sync"
 )
 
@@ -35,4 +38,35 @@ func (l *FileLogger) Log(ctx context.Context, entry Entry) error {
 
 	_, err = file.Write((append(line, '\n')))
 	return err
+}
+
+func (l *FileLogger) Recent(ctx context.Context, limit int) ([]Entry, error) {
+	file, err := os.Open(l.path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var entries []Entry
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var entry Entry
+		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
+			continue
+		}
+		entries = append(entries, entry)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	if limit > 0 && len(entries) > limit {
+		entries = entries[len(entries)-limit:]
+	}
+
+	slices.Reverse(entries)
+	return entries, nil
 }
