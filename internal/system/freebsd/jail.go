@@ -48,21 +48,50 @@ func (a *Adapter) runService(ctx context.Context, name, action string) (domain.J
 		Name: "service",
 		Args: []string{"jail", action, name},
 	}
-	result, err := a.runner.Run(ctx, cmd)
-	if err == nil {
-		err = validateJailActionResult(name, action, result)
-	}
-	if err != nil {
-		jail, _ := a.getJailByName(ctx, name)
-		return jail, &system.CommandError{
-			Command: cmd.Name,
-			Args:    cmd.Args,
-			Result:  result,
-			Err:     err,
-		}
+
+	result, runErr := a.runner.Run(ctx, cmd)
+	jail, stateErr := a.getJailByName(ctx, name)
+	cmdErr := &system.CommandError{
+		Command: cmd.Name,
+		Args:    cmd.Args,
+		Result:  result,
+		Err:     stateErr,
 	}
 
-	return a.getJailByName(ctx, name)
+	summary := summarizeJailActionFailure(name, action, result)
+	if stateErr != nil {
+		if runErr != nil {
+			cmdErr.Err = runErr
+			return domain.Jail{}, cmdErr
+		}
+		if summary != "" {
+			cmdErr.Err = errors.New(summary)
+		}
+		return domain.Jail{}, cmdErr
+	}
+	if runErr != nil {
+		cmdErr.Err = runErr
+		return jail, cmdErr
+	}
+	want := desiredStatusForAction(action)
+
+	if jail.Status != want {
+		cmdErr.Err = fmt.Errorf("%s: jail status is '%s', want '%s'", summary, jail.Status, want)
+		return jail, cmdErr
+	}
+
+	return jail, nil
+}
+
+func desiredStatusForAction(action string) domain.JailStatus {
+	switch action {
+	case "start", "restart":
+		return domain.JailStatusRunning
+	case "stop":
+		return domain.JailStatusStopped
+	default:
+		return ""
+	}
 }
 
 func (a *Adapter) Start(ctx context.Context, name string) (domain.Jail, error) {
@@ -77,51 +106,34 @@ func (a *Adapter) Restart(ctx context.Context, name string) (domain.Jail, error)
 	return a.runService(ctx, name, "restart")
 }
 
-func validateJailActionResult(name, action string, result system.CommandResult) error {
-	expectedVerbPrefix := "Starting"
-	if action == "stop" || action == "restart" {
-		expectedVerbPrefix = "Stopping"
+func summarizeJailActionFailure(name, action string, result system.CommandResult) string {
+	output := strings.TrimSpace(result.Stderr)
+	if output == "" {
+		output = strings.TrimSpace(result.Stdout)
 	}
-	prefix := fmt.Sprintf("%s jails: ", expectedVerbPrefix)
 
-	trimmed, _ := strings.CutPrefix(result.Stdout, prefix)
-	trimmed = strings.ReplaceAll(trimmed, "\n", " ")
-	trimmed = strings.ReplaceAll(trimmed, "  ", " ")
-	trimmed = strings.TrimSpace(trimmed)
-	// expected to find if success: "<jail>."
-	if retrimmed, ok := strings.CutSuffix(trimmed, fmt.Sprintf("%s.", name)); ok {
-		if len(retrimmed) == 0 {
-			return nil
-		}
+	output = strings.ReplaceAll(output, "\n", " ")
+	output = strings.Join(strings.Fields(output), " ")
+
+	prefixes := []string{
+		"Starting jails:",
+		"Stopping jails:",
+		fmt.Sprintf("cannot start jail \"%s\":", name),
+		fmt.Sprintf("cannot start jail  \"%s\":", name),
+		fmt.Sprintf("jail: %s:", name),
+		fmt.Sprintf("jail: \"%s\"", name),
 	}
-	if retrimmed, ok := strings.CutSuffix(trimmed, "."); ok {
-		if len(retrimmed) == 0 {
-			return nil
-		}
+
+	for _, prefix := range prefixes {
+		output = strings.ReplaceAll(output, prefix, "")
 	}
-	line_prefix := fmt.Sprintf("jail: %s:", name)
-	switch action {
-	case "start":
-		// for the command "start", it is expected "cannot start jail   "<name>":"
-		start_prefix := fmt.Sprintf("cannot start jail \"%s\":", name)
-		if start_trimmed, ok := strings.CutPrefix(trimmed, start_prefix); ok {
-			// means error
-			start_trimmed = strings.TrimSpace(start_trimmed)
-			startErr, _ := strings.CutPrefix(start_trimmed, line_prefix)
-			startErr = strings.ReplaceAll(startErr, line_prefix, "; ")
-			return errors.New(strings.TrimSpace(startErr))
-		}
-	case "stop", "restart":
-		// for the command "stop", it is expected the prefix <name>
-		// Restart => stop + start
-		stop_trimmed, _ := strings.CutPrefix(trimmed, name)
-		if len(stop_trimmed) == 1 {
-			return nil
-		}
-		stopErr, _ := strings.CutPrefix(stop_trimmed, line_prefix)
-		return errors.New(strings.TrimSpace(stopErr))
-	default:
-		return errors.New("unknown action " + action)
+
+	output = strings.Join(strings.Fields(output), " ")
+	output = strings.Trim(output, ".: ")
+
+	if output == "" {
+		return fmt.Sprintf("%s jail %q failed", action, name)
 	}
-	return errors.New(trimmed)
+
+	return output
 }
