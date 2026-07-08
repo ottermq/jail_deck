@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -87,7 +88,8 @@ func (s *JailService) logJailOperation(ctx context.Context, name, operation stri
 		Success:   err == nil,
 	}
 	if err != nil {
-		if commandErr, ok := err.(*system.CommandError); ok {
+		var commandErr *system.CommandError
+		if errors.As(err, &commandErr) {
 			entry.Command = commandErr.Command + " " + strings.Join(commandErr.Args, " ")
 			entry.ExitCode = commandErr.Result.ExitCode
 			entry.Error = commandErr.Unwrap().Error()
