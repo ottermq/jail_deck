@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/ottermq/jaildeck/internal/handlers"
+	"github.com/ottermq/jaildeck/internal/operations"
 	"github.com/ottermq/jaildeck/internal/services"
 	"github.com/ottermq/jaildeck/internal/system"
 	"github.com/ottermq/jaildeck/internal/system/freebsd"
@@ -17,6 +18,7 @@ type App struct {
 }
 
 func New() *App {
+	operationLogger := operations.NewFileLogger("jaildeck-operations.log")
 	renderer, err := views.NewRenderer()
 	if err != nil {
 		panic(err)
@@ -24,7 +26,7 @@ func New() *App {
 
 	// jailSystem := system.NewFakeJailSystem()
 	jailSystem := freebsd.NewAdapter(system.NewExecCommandRunner())
-	jailService := services.NewJailService(jailSystem)
+	jailService := services.NewJailService(jailSystem, operationLogger)
 	jailHandler := handlers.NewJailHandler(jailService, renderer)
 
 	return &App{

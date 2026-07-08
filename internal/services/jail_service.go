@@ -3,18 +3,23 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/ottermq/jaildeck/internal/domain"
+	"github.com/ottermq/jaildeck/internal/operations"
 	"github.com/ottermq/jaildeck/internal/system"
 )
 
 type JailService struct {
-	system system.JailSystem
+	system          system.JailSystem
+	operationLogger operations.Logger
 }
 
-func NewJailService(system system.JailSystem) *JailService {
+func NewJailService(system system.JailSystem, operationLogger operations.Logger) *JailService {
 	return &JailService{
-		system: system,
+		system:          system,
+		operationLogger: operationLogger,
 	}
 }
 
@@ -26,21 +31,28 @@ func (s *JailService) Start(ctx context.Context, name string) (domain.Jail, erro
 	if !validJailName(name) {
 		return domain.Jail{}, fmt.Errorf("invalid jail name %q", name)
 	}
-	return s.system.Start(ctx, name)
+	jail, err := s.system.Start(ctx, name)
+	s.logJailOperation(ctx, name, "start", err)
+	return jail, err
 }
 
 func (s *JailService) Stop(ctx context.Context, name string) (domain.Jail, error) {
 	if !validJailName(name) {
 		return domain.Jail{}, fmt.Errorf("invalid jail name %q", name)
 	}
-	return s.system.Stop(ctx, name)
+	jail, err := s.system.Stop(ctx, name)
+	s.logJailOperation(ctx, name, "stop", err)
+	return jail, err
 }
 
 func (s *JailService) Restart(ctx context.Context, name string) (domain.Jail, error) {
 	if !validJailName(name) {
 		return domain.Jail{}, fmt.Errorf("invalid jail name %q", name)
 	}
-	return s.system.Restart(ctx, name)
+	jail, err := s.system.Restart(ctx, name)
+	s.logJailOperation(ctx, name, "restart", err)
+
+	return jail, err
 }
 
 func validJailName(name string) bool {
@@ -64,4 +76,25 @@ func validJailName(name string) bool {
 		return false
 	}
 	return true
+}
+
+func (s *JailService) logJailOperation(ctx context.Context, name, operation string, err error) {
+	entry := operations.Entry{
+		Timesamp:  time.Now(),
+		Operation: operation,
+		Target:    name,
+		Commnad:   "",
+	}
+	if err != nil {
+		if commandErr, ok := err.(*system.CommandError); ok {
+			entry.Commnad = commandErr.Command + " " + strings.Join(commandErr.Args, " ")
+			entry.ExitCode = commandErr.Result.ExitCode
+			entry.Error = commandErr.Unwrap().Error()
+
+		} else {
+			entry.Error = err.Error()
+			entry.ExitCode = -1
+		}
+	}
+	_ = s.operationLogger.Log(ctx, entry)
 }

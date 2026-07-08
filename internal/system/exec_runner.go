@@ -13,7 +13,6 @@ func NewExecCommandRunner() *ExecCommandRunner {
 	return &ExecCommandRunner{}
 }
 
-// Run executes a command with the given name and arguments, capturing its output and exit code.
 func (r *ExecCommandRunner) Run(ctx context.Context, cmd Command) (CommandResult, error) {
 
 	c := exec.CommandContext(ctx, cmd.Name, cmd.Args...)
