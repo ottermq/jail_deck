@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/ottermq/jaildeck/internal/domain"
 	"github.com/ottermq/jaildeck/internal/services"
+	"github.com/ottermq/jaildeck/internal/system"
 	"github.com/ottermq/jaildeck/internal/views"
 )
 
@@ -48,7 +51,7 @@ func (h *JailHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.renderer.Render(w, "jails", data); err != nil {
-		fmt.Printf("failed to render page: %s", err.Error())
+		log.Printf("failed to render page: %s", err.Error())
 		http.Error(w, "failed to render page", http.StatusInternalServerError)
 	}
 }
@@ -60,7 +63,7 @@ func (h *JailHandler) Start(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result = OperationResultView{
 			Success: false,
-			Message: fmt.Sprintf("Failed to start jail %q.", name),
+			Message: operationFailureMessage("start", name, err),
 		}
 	} else {
 		result = OperationResultView{
@@ -86,7 +89,7 @@ func (h *JailHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result = OperationResultView{
 			Success: false,
-			Message: fmt.Sprintf("Failed to stop jail %q.", name),
+			Message: operationFailureMessage("stop", name, err),
 		}
 	} else {
 		result = OperationResultView{
@@ -112,7 +115,7 @@ func (h *JailHandler) Restart(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		result = OperationResultView{
 			Success: false,
-			Message: fmt.Sprintf("Failed to restart jail %q.", name),
+			Message: operationFailureMessage("restart", name, err),
 		}
 	} else {
 		result = OperationResultView{
@@ -129,4 +132,19 @@ func (h *JailHandler) Restart(w http.ResponseWriter, r *http.Request) {
 	if err := h.renderer.RenderComponent(w, "jails", "components/jail_action_result.html", data); err != nil {
 		http.Error(w, "failed to render jail action result", http.StatusInternalServerError)
 	}
+}
+
+func operationFailureMessage(action, name string, err error) string {
+	if err == nil {
+		return ""
+	}
+	var errMsg string
+	var cmdErr *system.CommandError
+	if errors.As(err, &cmdErr) {
+		errMsg = cmdErr.Summary()
+	} else {
+		errMsg = err.Error()
+	}
+
+	return fmt.Sprintf("Failed to %s jail %q: %s", action, name, errMsg)
 }

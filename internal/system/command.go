@@ -35,3 +35,10 @@ func (e *CommandError) Error() string {
 func (e *CommandError) Unwrap() error {
 	return e.Err
 }
+
+func (e *CommandError) Summary() string {
+	if e.Err == nil {
+		return ""
+	}
+	return e.Err.Error()
+}
