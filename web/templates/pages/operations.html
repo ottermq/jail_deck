@@ -2,6 +2,8 @@
 
 <h1>{{ .Title }}</h1>
 
+{{ if .Entries }}
+<p>Showing recent operations.</p>
 <table>
     <thead>
         <tr>
@@ -24,4 +26,7 @@
         {{ end }}
     </tbody>
 </table>
+{{ else }}
+<p>No operation history is available yet.</p>
+{{ end }}
 {{ end }}
