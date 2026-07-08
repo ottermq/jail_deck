@@ -6,10 +6,10 @@ import (
 )
 
 type Entry struct {
-	Timesamp  time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"timestamp"`
 	Operation string    `json:"operation"`
 	Target    string    `json:"target"`
-	Commnad   string    `json:"command"`
+	Command   string    `json:"command"`
 	ExitCode  int       `json:"exit_code"`
 	Success   bool      `json:"success"`
 	Error     string    `json:"error,omitempty"`

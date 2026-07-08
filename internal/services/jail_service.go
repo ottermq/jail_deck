@@ -80,14 +80,14 @@ func validJailName(name string) bool {
 
 func (s *JailService) logJailOperation(ctx context.Context, name, operation string, err error) {
 	entry := operations.Entry{
-		Timesamp:  time.Now(),
+		Timestamp: time.Now(),
 		Operation: operation,
 		Target:    name,
-		Commnad:   "",
+		Command:   "",
 	}
 	if err != nil {
 		if commandErr, ok := err.(*system.CommandError); ok {
-			entry.Commnad = commandErr.Command + " " + strings.Join(commandErr.Args, " ")
+			entry.Command = commandErr.Command + " " + strings.Join(commandErr.Args, " ")
 			entry.ExitCode = commandErr.Result.ExitCode
 			entry.Error = commandErr.Unwrap().Error()
 
