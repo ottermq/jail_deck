@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/otterlabs/jaildeck/internal/services"
-	"github.com/otterlabs/jaildeck/internal/views"
+	"github.com/ottermq/jaildeck/internal/services"
+	"github.com/ottermq/jaildeck/internal/views"
 )
 
 type JailHandler struct {
