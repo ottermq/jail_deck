@@ -14,6 +14,6 @@ func NewOperationService(reader operations.Reader) *OperationService {
 	return &OperationService{reader: reader}
 }
 
-func (s *OperationService) Recent(ctx context.Context, limit int) ([]operations.Entry, error) {
-	return s.reader.Recent(ctx, limit)
+func (s *OperationService) Recent(ctx context.Context, limit int, filters map[string]any) ([]operations.Entry, error) {
+	return s.reader.Recent(ctx, limit, filters)
 }

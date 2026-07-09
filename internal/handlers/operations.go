@@ -3,10 +3,17 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/ottermq/jaildeck/internal/operations"
 	"github.com/ottermq/jaildeck/internal/services"
 	"github.com/ottermq/jaildeck/internal/views"
+)
+
+const (
+	defaultLimit = 50
+	maxLimit     = 200
 )
 
 type OperationHandler struct {
@@ -19,17 +26,43 @@ func NewOperationHandler(service *services.OperationService, renderer *views.Ren
 }
 
 func (h *OperationHandler) List(w http.ResponseWriter, r *http.Request) {
-	entries, err := h.service.Recent(r.Context(), 50)
+	filters := make(map[string]any)
+	qOperation := r.URL.Query().Get("operation")
+	switch qOperation {
+	case "start", "stop", "restart":
+		filters["operation"] = qOperation
+	default:
+	}
+	qSuccess := r.URL.Query().Get("success")
+	switch qSuccess {
+	case "true", "false":
+		filters["success"] = qSuccess == "true"
+	default:
+	}
+	if qTarget := r.URL.Query().Get("targets"); qTarget != "" {
+		targets := strings.Split(qTarget, ",")
+		filters["targets"] = targets
+	}
+	qLimit := r.URL.Query().Get("limit")
+	limit, err := strconv.Atoi(qLimit)
+	if err != nil || limit < 1 {
+		limit = defaultLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+
+	entries, err := h.service.Recent(r.Context(), limit, filters)
 	if err != nil {
 		http.Error(w, "failed to list operations", http.StatusInternalServerError)
 		return
 	}
 
 	data := struct {
-		Title  string
+		Title   string
 		Entries []operations.Entry
 	}{
-		Title:  "Operations",
+		Title:   "Operations",
 		Entries: entries,
 	}
 

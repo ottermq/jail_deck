@@ -20,5 +20,5 @@ type Logger interface {
 }
 
 type Reader interface {
-	Recent(ctx context.Context, limit int) ([]Entry, error)
+	Recent(ctx context.Context, limit int, filter map[string]any) ([]Entry, error)
 }
