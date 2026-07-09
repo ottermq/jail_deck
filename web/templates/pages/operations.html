@@ -2,6 +2,8 @@
 
 <h1>{{ .Title }}</h1>
 
+{{ template "components/operation_filters.html" .Filter }}
+
 {{ if .Entries }}
 <p class="page-note">Showing recent operations.</p>
 <table class="data-table operations-table">
